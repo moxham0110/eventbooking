@@ -4,14 +4,15 @@ import com.pmoxham.eventbooking.model.Event;
 import com.pmoxham.eventbooking.model.User;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class RegistrationDTO {
-    private Long id;
-    private Long userId;
-    private Long eventId;
+    private Long registrationID;
+    private Long userID;
+    private EventDTO event;
     private LocalDateTime registeredAt;
 }

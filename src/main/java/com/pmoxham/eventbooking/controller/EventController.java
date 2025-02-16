@@ -1,7 +1,9 @@
 package com.pmoxham.eventbooking.controller;
 
+import com.pmoxham.eventbooking.dto.EventDTO;
 import com.pmoxham.eventbooking.model.Event;
 import com.pmoxham.eventbooking.repository.EventRepository;
+import com.pmoxham.eventbooking.service.IEventService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,19 +12,23 @@ import java.util.List;
 @RestController
 @RequestMapping("/events")
 public class EventController {
-    private final EventRepository eventRepository;
+    private final IEventService eventService;
 
-    public EventController(EventRepository eventRepository) {
-        this.eventRepository = eventRepository;
+    public EventController(IEventService eventService) {
+        this.eventService = eventService;
     }
 
     @GetMapping
-    public List<Event> getAllEvents() {
-        return eventRepository.findAll();
+    public List<EventDTO> getAllEvents() {
+        return eventService.getAllEvents();
     }
 
     @PostMapping
-    public Event createEvent(@RequestBody Event event) {
-        return eventRepository.save(event);
+    public EventDTO createEvent(@RequestBody EventDTO eventDTO) {
+        return eventService.createEvent(eventDTO);
+    }
+
+    @DeleteMapping("/{eventID}") void deleteEvent(@PathVariable Long eventID){
+        eventService.deleteEvent(eventID);
     }
 }

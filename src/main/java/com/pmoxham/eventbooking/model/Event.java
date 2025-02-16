@@ -21,7 +21,7 @@ public class Event {
     @Column(nullable = false)
     private LocalDate eventDate;
 
-    private int availableSeats;
+    private Long availableSeats;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
     private List<Registration> registrations;

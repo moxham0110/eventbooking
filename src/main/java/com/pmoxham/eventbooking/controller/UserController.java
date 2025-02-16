@@ -1,10 +1,9 @@
 package com.pmoxham.eventbooking.controller;
 
+import com.pmoxham.eventbooking.dto.EventDTO;
+import com.pmoxham.eventbooking.dto.RegistrationDTO;
 import com.pmoxham.eventbooking.dto.UserDTO;
-import com.pmoxham.eventbooking.model.User;
-import com.pmoxham.eventbooking.repository.UserRepository;
 import com.pmoxham.eventbooking.service.IUserService;
-import com.pmoxham.eventbooking.service.impl.UserServiceImpl;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,14 +17,35 @@ public class UserController {
         this.service = service;
     }
 
+    @GetMapping("/{userID}")
+    public UserDTO getUserByID(@PathVariable Long userID){
+        return service.getUserByID(userID);
+    }
+
     @GetMapping
-    public List<User> getAllUsers() {
+    public List<UserDTO> getAllUsers() {
         return service.getAllUsers();
     }
 
-    @PostMapping("/create")
+    @PostMapping
     public UserDTO createUser(@RequestBody UserDTO userDTO) {
-        userDTO = service.registerUser(userDTO);
+        userDTO = service.createUser(userDTO);
         return userDTO;
     }
+
+    @GetMapping("/{userID}/registrations")
+    public List<RegistrationDTO> getUserRegistrations(@PathVariable Long userID) {
+        return service.getUserRegistrations(userID);
+    }
+
+    @PostMapping("/{userID}/registrations/{eventID}")
+    public EventDTO registerUserForEvent(@PathVariable Long userID, @PathVariable Long eventID) {
+        return service.registerUserForEvent(userID, eventID);
+    }
+
+    @DeleteMapping("/{userID}/registrations/{registrationID}")
+    public void cancelRegistration(@PathVariable Long userID, @PathVariable Long registrationID) {
+        service.cancelRegistration(userID, registrationID);
+    }
+
 }

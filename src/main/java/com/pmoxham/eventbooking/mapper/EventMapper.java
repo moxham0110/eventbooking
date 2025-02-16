@@ -4,7 +4,8 @@ import com.pmoxham.eventbooking.dto.EventDTO;
 import com.pmoxham.eventbooking.model.Event;
 
 public class EventMapper {
-    public static EventDTO mapToEventDTO(Event event, EventDTO eventDTO) {
+    public static EventDTO mapToEventDTO(Event event) {
+        EventDTO eventDTO = new EventDTO();
         eventDTO.setId(event.getId());
         eventDTO.setName(event.getName());
         eventDTO.setLocation(event.getLocation());
@@ -13,7 +14,8 @@ public class EventMapper {
         return eventDTO;
     }
 
-    public static Event mapToEvent(EventDTO eventDTO, Event event) {
+    public static Event mapToEvent(EventDTO eventDTO) {
+        Event event = new Event();
         event.setId(eventDTO.getId());
         event.setName(eventDTO.getName());
         event.setLocation(eventDTO.getLocation());
