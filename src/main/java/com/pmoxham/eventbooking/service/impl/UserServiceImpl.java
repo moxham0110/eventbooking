@@ -3,6 +3,10 @@ package com.pmoxham.eventbooking.service.impl;
 import com.pmoxham.eventbooking.dto.EventDTO;
 import com.pmoxham.eventbooking.dto.RegistrationDTO;
 import com.pmoxham.eventbooking.dto.UserDTO;
+import com.pmoxham.eventbooking.exception.EventDateInPastException;
+import com.pmoxham.eventbooking.exception.InvalidRegistrationException;
+import com.pmoxham.eventbooking.exception.ResourceNotFoundException;
+import com.pmoxham.eventbooking.exception.UserAlreadyExistsException;
 import com.pmoxham.eventbooking.mapper.EventMapper;
 import com.pmoxham.eventbooking.mapper.RegistrationMapper;
 import com.pmoxham.eventbooking.mapper.UserMapper;
@@ -14,9 +18,11 @@ import com.pmoxham.eventbooking.repository.RegistrationRepository;
 import com.pmoxham.eventbooking.repository.UserRepository;
 import com.pmoxham.eventbooking.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -35,71 +41,75 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public UserDTO createUser(UserDTO userDto) {
-        //mapper
+        if (userRepository.existsByEmail(userDto.getEmail())) {
+            throw new UserAlreadyExistsException("A user with this email already exists: " + userDto.getEmail());
+        }
+
         User user = UserMapper.mapToUser(userDto);
-
         user = userRepository.save(user);
-        //todo: validation - user already exists, incorrect email etc.
-
         return UserMapper.mapToUserDTO(user);
     }
 
     @Override
-    public List<UserDTO> getAllUsers() {
-        return userRepository.findAll().stream().map(UserMapper::mapToUserDTO).toList();
+    public Page<UserDTO> getAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable).map(UserMapper::mapToUserDTO);
     }
 
     @Override
     public UserDTO getUserByID(Long id) {
-        //todo: Handle no user of that id in DB
-        User user = userRepository.findById(id).orElseThrow();
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + id));
         return UserMapper.mapToUserDTO(user);
     }
 
     @Override
-    public List<RegistrationDTO> getUserRegistrations(Long userID) {
+    public Page<RegistrationDTO> getUserRegistrations(Long userID, Pageable pageable) {
 
         User user = userRepository.findById(userID).orElseThrow();
-        List<Registration> userRegistrations = registrationRepository.findByUser(user);
+        Page<Registration> userRegistrations = registrationRepository.findByUser(user, pageable);
 
-        return userRegistrations.stream().map(RegistrationMapper::mapToRegistrationDTO).toList();
+        return userRegistrations.map(RegistrationMapper::mapToRegistrationDTO);
+    }
+
+    @Override
+    public UserDTO updateUser(UserDTO userDTO){
+        User updatedUser = UserMapper.mapToUser(userDTO);
+
+        if(userRepository.existsById(updatedUser.getId())){
+            return UserMapper.mapToUserDTO(userRepository.save(updatedUser));
+        }
+        throw new RuntimeException("No ID for that user");
     }
 
     @Override
     public EventDTO registerUserForEvent(Long userID, Long eventID) {
+        Event event = eventRepository.findById(eventID)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with ID: " + eventID));
 
-        //todo: Must be a user and valid event
-        User user = userRepository.findById(userID).orElseThrow();
-        Event event = eventRepository.findById(eventID).orElseThrow();
+        if (event.getEventDate().isBefore(LocalDate.now())) {
+            throw new EventDateInPastException("Cannot register for an event in the past.");
+        }
 
-        boolean isRegistered = registrationRepository.existsByUserAndEvent(user, event);
-
-        if(isRegistered){
-            //todo: Exception handling
-            throw new RuntimeException();
+        if (event.getAvailableSeats() < 1){
+            throw new InvalidRegistrationException("Registration failed. No seats available.");
         }
 
         Registration registration = new Registration();
-        registration.setUser(user);
+        registration.setUser(userRepository.findById(userID)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userID)));
         registration.setEvent(event);
         registration.setRegisteredAt(LocalDateTime.now());
 
         registrationRepository.save(registration);
-
         return EventMapper.mapToEventDTO(event);
     }
 
     @Override
     public void cancelRegistration(Long userID, Long registrationID) {
         Registration registration = registrationRepository.findById(registrationID)
-                .orElseThrow();
-
-        // Ensure the registration belongs to the user
-        if (!registration.getUser().getId().equals(userID)) {
-            //todo: Exception handling
-            throw new RuntimeException();
-        }
+                .orElseThrow(() -> new ResourceNotFoundException("Registration not found with ID: " + registrationID));
 
         registrationRepository.delete(registration);
     }
+
 }

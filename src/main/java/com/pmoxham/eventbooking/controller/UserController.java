@@ -1,9 +1,16 @@
 package com.pmoxham.eventbooking.controller;
 
+import com.pmoxham.eventbooking.constants.RegistrationConstants;
 import com.pmoxham.eventbooking.dto.EventDTO;
 import com.pmoxham.eventbooking.dto.RegistrationDTO;
+import com.pmoxham.eventbooking.dto.ResponseDto;
 import com.pmoxham.eventbooking.dto.UserDTO;
 import com.pmoxham.eventbooking.service.IUserService;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,34 +25,46 @@ public class UserController {
     }
 
     @GetMapping("/{userID}")
-    public UserDTO getUserByID(@PathVariable Long userID){
-        return service.getUserByID(userID);
+    public ResponseEntity<UserDTO> getUserByID(@PathVariable Long userID) {
+        UserDTO user = service.getUserByID(userID);
+        return ResponseEntity.ok(user);
     }
 
     @GetMapping
-    public List<UserDTO> getAllUsers() {
-        return service.getAllUsers();
+    public ResponseEntity<Page<UserDTO>> getAllUsers(Pageable pageable) {
+        Page<UserDTO> users = service.getAllUsers(pageable);
+        return ResponseEntity.ok(users);
     }
 
     @PostMapping
-    public UserDTO createUser(@RequestBody UserDTO userDTO) {
-        userDTO = service.createUser(userDTO);
-        return userDTO;
+    public ResponseEntity<ResponseDto> createUser(@Valid @RequestBody UserDTO userDTO) {
+        UserDTO createdUser = service.createUser(userDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ResponseDto(RegistrationConstants.STATUS_201, RegistrationConstants.MESSAGE_201_USER));
+    }
+
+    @PutMapping
+    public ResponseEntity<ResponseDto> updateUser(@Valid @RequestBody UserDTO userDTO) {
+        UserDTO updatedUser = service.updateUser(userDTO);
+        return ResponseEntity.ok(new ResponseDto(RegistrationConstants.STATUS_200, RegistrationConstants.MESSAGE_200_UPDATE));
     }
 
     @GetMapping("/{userID}/registrations")
-    public List<RegistrationDTO> getUserRegistrations(@PathVariable Long userID) {
-        return service.getUserRegistrations(userID);
+    public ResponseEntity<Page<RegistrationDTO>> getUserRegistrations(@PathVariable Long userID, Pageable pageable) {
+        Page<RegistrationDTO> registrations = service.getUserRegistrations(userID, pageable);
+        return ResponseEntity.ok(registrations);
     }
 
     @PostMapping("/{userID}/registrations/{eventID}")
-    public EventDTO registerUserForEvent(@PathVariable Long userID, @PathVariable Long eventID) {
-        return service.registerUserForEvent(userID, eventID);
+    public ResponseEntity<ResponseDto> registerUserForEvent(@PathVariable Long userID, @PathVariable Long eventID) {
+        service.registerUserForEvent(userID, eventID);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ResponseDto(RegistrationConstants.STATUS_201, RegistrationConstants.MESSAGE_201_REGISTRATION));
+
     }
 
     @DeleteMapping("/{userID}/registrations/{registrationID}")
-    public void cancelRegistration(@PathVariable Long userID, @PathVariable Long registrationID) {
+    public ResponseEntity<ResponseDto> cancelRegistration(@PathVariable Long userID, @PathVariable Long registrationID) {
         service.cancelRegistration(userID, registrationID);
+        return ResponseEntity.ok(new ResponseDto(RegistrationConstants.STATUS_200, RegistrationConstants.MESSAGE_200_DELETE));
     }
-
 }

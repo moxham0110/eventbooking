@@ -10,7 +10,7 @@ public class RegistrationMapper {
         registrationDTO.setUserID(registration.getUser().getId());
         registrationDTO.setEvent(EventMapper.mapToEventDTO(registration.getEvent()));
         registrationDTO.setRegisteredAt(registration.getRegisteredAt());
+        registrationDTO.addHateoasLinks(registration.getUser().getId(), registration.getId(),registration.getEvent().getId(), null);
         return registrationDTO;
     }
-
 }

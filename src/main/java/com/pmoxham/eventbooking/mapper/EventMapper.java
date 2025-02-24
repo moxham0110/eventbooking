@@ -11,6 +11,7 @@ public class EventMapper {
         eventDTO.setLocation(event.getLocation());
         eventDTO.setEventDate(event.getEventDate());
         eventDTO.setAvailableSeats(event.getAvailableSeats());
+        eventDTO.addHateoasLinks(event.getId(), null);
         return eventDTO;
     }
 
